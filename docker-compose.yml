@@ -2,9 +2,11 @@ version: "3.8"
 
 services:
   viking-fitatu:
-    build: .
+    image: python:3.11-slim
     container_name: viking-fitatu
-    restart: unless-stopped
+    working_dir: /app
+    command: >
+      sh -c "pip install requests -q && tail -f /dev/null"
     environment:
       - VIKING_EMAIL=${VIKING_EMAIL}
       - VIKING_PASSWORD=${VIKING_PASSWORD}
@@ -13,4 +15,20 @@ services:
       - FITATU_SECRET=${FITATU_SECRET}
       - TZ=Europe/Warsaw
     volumes:
-      - ./logs:/var/log
+      - ./viking_fitatu_integration.py:/app/viking_fitatu_integration.py
+      - ./auth.py:/app/auth.py
+      - ./config.py:/app/config.py
+      - ./logs:/app/logs
+    labels:
+      ofelia.enabled: "true"
+      ofelia.job-exec.viking.schedule: "0 7 * * *"
+      ofelia.job-exec.viking.command: "python viking_fitatu_integration.py"
+
+  ofelia:
+    image: mcuadros/ofelia:latest
+    container_name: ofelia
+    restart: unless-stopped
+    depends_on:
+      - viking-fitatu
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
