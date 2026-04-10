@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  viking-fitatu:
+    build: .
+    container_name: viking-fitatu
+    restart: unless-stopped
+    environment:
+      - VIKING_EMAIL=${VIKING_EMAIL}
+      - VIKING_PASSWORD=${VIKING_PASSWORD}
+      - FITATU_EMAIL=${FITATU_EMAIL}
+      - FITATU_PASSWORD=${FITATU_PASSWORD}
+      - FITATU_SECRET=${FITATU_SECRET}
+      - TZ=Europe/Warsaw
+    volumes:
+      - ./logs:/var/log
