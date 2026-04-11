@@ -22,7 +22,7 @@ services:
     labels:
       ofelia.enabled: "true"
       ofelia.job-exec.viking.schedule: "0 7 * * *"
-      ofelia.job-exec.viking.command: "python -m viking_fitatu_integration"
+      ofelia.job-exec.viking.command: "sh -c 'cd /app && python viking_fitatu_integration.py'"
 
   ofelia:
     image: mcuadros/ofelia:latest
