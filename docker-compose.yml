@@ -22,14 +22,12 @@ services:
     labels:
       ofelia.enabled: "true"
       ofelia.job-exec.viking.schedule: "0 7 * * *"
-      ofelia.job-exec.viking.command: "python viking_fitatu_integration.py"
+      ofelia.job-exec.viking.command: "python -m viking_fitatu_integration"
 
   ofelia:
     image: mcuadros/ofelia:latest
     container_name: ofelia
     restart: unless-stopped
-    depends_on:
-      - viking-fitatu
     command: daemon --docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
