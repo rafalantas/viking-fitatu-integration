@@ -30,5 +30,6 @@ services:
     restart: unless-stopped
     depends_on:
       - viking-fitatu
+    command: daemon --docker
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
