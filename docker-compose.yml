@@ -6,7 +6,7 @@ services:
     container_name: viking-fitatu
     working_dir: /app
     command: >
-      sh -c "pip install requests -q && tail -f /dev/null"
+      sh -c "pip install requests -q && chmod +x /app/run.sh && tail -f /dev/null"
     environment:
       - VIKING_EMAIL=${VIKING_EMAIL}
       - VIKING_PASSWORD=${VIKING_PASSWORD}
@@ -18,11 +18,12 @@ services:
       - ./viking_fitatu_integration.py:/app/viking_fitatu_integration.py
       - ./auth.py:/app/auth.py
       - ./config.py:/app/config.py
+      - ./run.sh:/app/run.sh
       - ./logs:/app/logs
     labels:
       ofelia.enabled: "true"
       ofelia.job-exec.viking.schedule: "0 7 * * *"
-      ofelia.job-exec.viking.command: "sh -c 'cd /app && python viking_fitatu_integration.py'"
+      ofelia.job-exec.viking.command: "/app/run.sh"
 
   ofelia:
     image: mcuadros/ofelia:latest
