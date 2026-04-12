@@ -276,7 +276,8 @@ def process_meal(delivery: dict, target_date: str) -> tuple[str, str]:
     meal_ids, meal_weights = {}, {}
     for meal in viking_date_data.get("deliveryMenuMeal", []):
         if meal.get("deliveryMealId") is None:
-            logging.info(f"Skipping '{meal.get("mealName", "")}' - there is no develivery")
+            meal_name = meal.get("mealName", "")
+            logging.info(f"Skipping '{meal_name}' - there is no develivery"
             continue
 
         menu_meal_name = meal.get("menuMealName")
