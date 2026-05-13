@@ -2,15 +2,16 @@ import requests
 import logging
 import base64
 import json
+from datetime import date
 
-# -- Viking -------------------------------------------------------------------
+# ── Viking ───────────────────────────────────────────────────────────────────
 
 VIKING_LOGIN_URL = "https://panel.kuchniavikinga.pl/api/auth/login"
 VIKING_ORDER_LIST_URL = "https://panel.kuchniavikinga.pl/api/company/customer/order/all"
 
 
 def viking_login(email: str, password: str) -> tuple[dict, int]:
-    """Loguje sie do Viking, zwraca (headers, order_id)."""
+    """Loguje się do Viking, zwraca (headers, order_id)."""
     session = requests.Session()
 
     resp = session.post(
@@ -40,15 +41,29 @@ def viking_login(email: str, password: str) -> tuple[dict, int]:
     if not orders:
         raise RuntimeError("No Viking orders found")
 
-    # Wszystkie zam�wienia maja status ACTIVE - wybierz to z najp�zniejsza data
-    order = max(orders, key=lambda o: o.get("dateFrom", ""))
-    order_id = order["orderId"]
+    today = date.today().strftime("%Y-%m-%d")
 
-    logging.info(f"Viking login OK, order_id={order_id}, dateFrom={order.get('dateFrom')}")
+    # Wybierz zamówienie którego zakres dat obejmuje dzisiaj
+    current = next(
+        (o for o in orders if o.get("dateFrom", "") <= today <= o.get("dateTo", "")),
+        None
+    )
+
+    # Jeśli nie ma aktywnego dziś - weź najbliższe przyszłe
+    if not current:
+        future = [o for o in orders if o.get("dateFrom", "") > today]
+        current = min(future, key=lambda o: o.get("dateFrom", "")) if future else None
+
+    # Ostateczny fallback - najnowsze
+    if not current:
+        current = max(orders, key=lambda o: o.get("dateFrom", ""))
+
+    order_id = current["orderId"]
+    logging.info(f"Viking login OK, order_id={order_id}, dateFrom={current.get('dateFrom')}, dateTo={current.get('dateTo')}")
     return headers, order_id
 
 
-# -- Fitatu -------------------------------------------------------------------
+# ── Fitatu ───────────────────────────────────────────────────────────────────
 
 FITATU_LOGIN_URL = "https://pl-pl.fitatu.com/api/login"
 
@@ -76,7 +91,7 @@ def _decode_jwt_payload(token: str) -> dict:
 
 
 def fitatu_login(email: str, password: str, api_secret: str) -> tuple[dict, str]:
-    """Loguje sie do Fitatu, zwraca (headers, user_id)."""
+    """Loguje się do Fitatu, zwraca (headers, user_id)."""
     login_headers = {**FITATU_BASE_HEADERS, "Api-Secret": api_secret}
 
     resp = requests.post(
