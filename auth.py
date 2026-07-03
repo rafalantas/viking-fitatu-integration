@@ -43,23 +43,29 @@ def viking_login(email: str, password: str) -> tuple[dict, int]:
 
     today = date.today().strftime("%Y-%m-%d")
 
-    # Wybierz zamówienie którego zakres dat obejmuje dzisiaj
-    current = next(
-        (o for o in orders if o.get("dateFrom", "") <= today <= o.get("dateTo", "")),
+    # Szukaj zamówienia które ma dostawę dokładnie dziś
+    order_with_today = next(
+        (o for o in orders if today in o.get("deliveryDates", [])),
         None
     )
 
-    # Jeśli nie ma aktywnego dziś - weź najbliższe przyszłe
-    if not current:
-        future = [o for o in orders if o.get("dateFrom", "") > today]
-        current = min(future, key=lambda o: o.get("dateFrom", "")) if future else None
+    if order_with_today:
+        order = order_with_today
+    else:
+        # Brak dostawy dziś - weź zamówienie aktywne dziś (dateFrom <= dziś <= dateTo)
+        current = next(
+            (o for o in orders if o.get("dateFrom", "") <= today <= o.get("dateTo", "")),
+            None
+        )
+        # Jeśli nie ma aktywnego - weź najbliższe przyszłe
+        if not current:
+            future = [o for o in orders if o.get("dateFrom", "") > today]
+            current = min(future, key=lambda o: o.get("dateFrom", "")) if future else None
+        # Ostateczny fallback - najnowsze
+        order = current or max(orders, key=lambda o: o.get("dateFrom", ""))
 
-    # Ostateczny fallback - najnowsze
-    if not current:
-        current = max(orders, key=lambda o: o.get("dateFrom", ""))
-
-    order_id = current["orderId"]
-    logging.info(f"Viking login OK, order_id={order_id}, dateFrom={current.get('dateFrom')}, dateTo={current.get('dateTo')}")
+    order_id = order["orderId"]
+    logging.info(f"Viking login OK, order_id={order_id}, dateFrom={order.get('dateFrom')}, dateTo={order.get('dateTo')}")
     return headers, order_id
 
 
