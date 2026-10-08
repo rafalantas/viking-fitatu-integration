@@ -5,7 +5,6 @@ services:
     image: ghcr.io/rafalantas/viking-fitatu-integration:latest
     container_name: viking-fitatu
     restart: unless-stopped
-    command: tail -f /dev/null
     environment:
       - VIKING_EMAIL=${VIKING_EMAIL}
       - VIKING_PASSWORD=${VIKING_PASSWORD}
