@@ -14,16 +14,20 @@ def viking_login(email: str, password: str) -> tuple[dict, int]:
     """Loguje się do Viking, zwraca (headers, order_id)."""
     session = requests.Session()
 
-    resp = session.post(
-        VIKING_LOGIN_URL,
-        data={"username": email, "password": password},
-        headers={
-            "company-id": "kuchniavikinga",
-            "x-launcher-type": "BROWSER_PANEL",
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        timeout=30,
-    )
+    login_headers = {
+        "company-id": "kuchniavikinga",
+        "x-launcher-type": "BROWSER_PANEL",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+    payload = {"username": email, "password": password}
+
+    resp = session.post(VIKING_LOGIN_URL, data=payload, headers=login_headers, timeout=30)
+
+    # CSRF: pierwszy POST zwraca 403 + ciasteczko XSRF-TOKEN,
+    # powtarzamy żądanie z tokenem w nagłówku X-XSRF-TOKEN.
+    if resp.status_code == 403 and session.cookies.get("XSRF-TOKEN"):
+        login_headers["X-XSRF-TOKEN"] = session.cookies.get("XSRF-TOKEN")
+        resp = session.post(VIKING_LOGIN_URL, data=payload, headers=login_headers, timeout=30)
 
     if resp.status_code != 200:
         raise RuntimeError(f"Viking login failed: {resp.status_code} {resp.text}")
@@ -112,7 +116,6 @@ def fitatu_login(email: str, password: str, api_secret: str) -> tuple[dict, str]
 
     data = resp.json()
     token = data["token"]
-
     jwt_payload = _decode_jwt_payload(token)
     user_id = jwt_payload["id"]
 
